@@ -1,6 +1,8 @@
 # SyncRenderSets
 Synchronize rendering settings between scenes in Blender, synchronize render passes settings for viewlayers.
 
+如果你是汉语用户，可以到我B站(https://space.bilibili.com/2711518?spm_id_from=333.788.0.0)去下载中文版本,这里下载的是英文版本的！！
+
 When blender has more than one scene, you want to make sure the rendering settings of each scene are the same, you need to keep switching scenes, that's too cumbersome, so I made this plugin, the goal is to compare the rendering settings of all the scenes in a page is the same, and according to the settings of a scene to synchronize the settings of all the other scenes.
 This problem also exists for view layers, so you can synchronize the render channels of the current view layer to all other render layers with one click in the plugin!
 
