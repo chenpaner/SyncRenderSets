@@ -1,10 +1,10 @@
 bl_info = {
-    "name" : "SyncRenderSets",
-    "author" : "CP-Design", 
-    "description" : "Unified management to synchronize all scene rendering settings and passes for all view layers",
+    "name" : "SyncRenderSets场景和视图层同步渲染设置",
+    "author" : "CP设计", 
+    "description" : "统一管理所有场景渲染设置和所有视图层的通道勾选状态",
     "blender" : (3, 0, 0),
     "version" : (1, 0, 1),
-    "location" : "3Dview > Nplane > SyncRenderSets",
+    "location" : "3Dview > N面板 > 同步",
     "doc_url": "https://github.com/chenpaner", 
     "tracker_url": "", 
     "category" : "CP" 
@@ -17,7 +17,7 @@ class COLORMAN_PT_Panel(bpy.types.Panel):#色彩管理
     bl_label = "Color Management"#色彩管理
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'SyncRenderSets'
+    bl_category = '同步'
     bl_order = 4  # 面板的显示顺序
     
     @classmethod
@@ -37,32 +37,37 @@ class COLORMAN_PT_Panel(bpy.types.Panel):#色彩管理
             scene_txt = ""  # 默认文字
             if scene.name == bpy.context.scene.name:
                 scene_icon = "FUND"  # 当前场景的图标
-                scene_txt = "【Current】"
-                col_label.alert = True
+                scene_txt = "【当前场景】"
+                col_label.alert = True #用警告样式
             col_label.label(text= f" {scene.name}" + scene_txt, icon=scene_icon)  # 场景名称
 
             col_prop = row.column()
             col_prop.prop(scene.view_settings, "use_curve_mapping", text="Use Curves") 
             
             render_box = layout.box()
+            # 创建流式列布局
             column = render_box.column_flow(columns=1)#分为两列进行布局,无法手动设置列数
             column.prop(scene.display_settings, "display_device", text="Display Device")
             column.prop(scene.view_settings, "view_transform", text="View Transform")
             column.prop(scene.view_settings, "look", text="Look")
                
             column2 = render_box.column_flow(columns=2 ,align=True)#分为两列进行布局,无法手动设置列数
-            column2.prop(scene.view_settings, "exposure")
-            column2 .prop(scene.view_settings, "gamma")
+            column2.prop(scene.view_settings, "exposure", text="曝光")
+            #row_2CC4F.prop(scene.view_settings.curve_mapping, "exposure", text="曝光曲线")
+            column2 .prop(scene.view_settings, "gamma", text="伽马")
+            #column2.prop(scene.view_settings, "use_curve_mapping", text="Use Curves")
 
-            
-            layout.separator()
-            
+            view = scene.view_settings
+            if view.use_curve_mapping == True:
+                layout.template_curve_mapping(view, "curve_mapping", type='COLOR', levels=True)
+
+
 class LIGHTPATHS_PT_Panel(bpy.types.Panel):#光程
     bl_idname = "LIGHTPATHS_PT_Panel"
     bl_label = "Light Paths"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'SyncRenderSets'
+    bl_category = '同步'
     bl_order = 3  # 面板的显示顺序
     
     @classmethod
@@ -81,11 +86,13 @@ class LIGHTPATHS_PT_Panel(bpy.types.Panel):#光程
             scene_txt = ""  # 默认文字
             if scene.name == bpy.context.scene.name:
                 scene_icon = "FUND"  # 当前场景的图标
-                scene_txt = "【Current】"
-                col_label.alert = True
+                scene_txt = "【当前场景】"
+                col_label.alert = True #用警告样式
             col_label.label(text= f" {scene.name}" + scene_txt, icon=scene_icon)  # 场景名称
             col0_prop = row.column()
-            col0_prop.operator("scene.sync_light_paths", text="Sync", icon="UV_SYNC_SELECT").scene_index = scenes.find(scene.name)
+            col0_prop.operator("scene.sync_light_paths", text="同步", icon="UV_SYNC_SELECT").scene_index = scenes.find(scene.name)
+
+  
 
             renderset_box = layout.box()#整体box
         # 光程面板
@@ -100,6 +107,7 @@ class LIGHTPATHS_PT_Panel(bpy.types.Panel):#光程
                 col_prop.prop(scene.cycles, "max_bounces", text="Total")
                
                 row = ligthpaths_box.row(heading='', align=True)
+                row.alignment = 'RIGHT'
                 row.prop(scene.cycles, "diffuse_bounces", text="Diffuse")
                 row.prop(scene.cycles, "glossy_bounces", text="Glossy")
                 row.prop(scene.cycles, "transmission_bounces", text="Transmission")
@@ -127,10 +135,15 @@ class LIGHTPATHS_PT_Panel(bpy.types.Panel):#光程
                   
 class SCENE_OT_SyncLightPaths(bpy.types.Operator):#同步光程
     bl_idname = "scene.sync_light_paths"
-    bl_label = ""
-    bl_description = "Synchronize the light path settings of this scene to other scenes"
+    bl_label = "同步该场景的光程到其它场景"
+    bl_description = "同步该场景的光程到其它场景"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
     scene_index: bpy.props.IntProperty()
+
+    def invoke(self, context, event):
+        self.execute(context)
+        return {'FINISHED'}
 
     def execute(self, context):
         scenes = bpy.data.scenes
@@ -154,12 +167,13 @@ class SCENE_OT_SyncLightPaths(bpy.types.Operator):#同步光程
         
         return {'FINISHED'}
 
+
 class SAMPLES_PT_Panel(bpy.types.Panel):#渲染采样
     bl_idname = "SAMPLES_PT_Panel"
     bl_label = "Samples"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'SyncRenderSets'
+    bl_category = '同步'
     bl_order = 2  # 面板的显示顺序
     
     @classmethod
@@ -178,14 +192,16 @@ class SAMPLES_PT_Panel(bpy.types.Panel):#渲染采样
             scene_txt = ""  # 默认文字
             if scene.name == bpy.context.scene.name:
                 scene_icon = "FUND"  # 当前场景的图标
-                scene_txt = "【Current】"
-                col_label.alert = True
+                scene_txt = "【当前场景】"
+                col_label.alert = True #用警告样式，设置为 True
             col_label.label(text= f" {scene.name}" + scene_txt, icon=scene_icon)  # 场景名称
             col0_prop = row.column()
-            col0_prop.operator("scene.sync_samples", text="Sync", icon="UV_SYNC_SELECT").scene_index = scenes.find(scene.name)        
-
-            renderset_box = layout.box()#整体box            
-
+            col0_prop.operator("scene.sync_samples", text="同步", icon="UV_SYNC_SELECT").scene_index = scenes.find(scene.name)
+            
+#            col = layout.column(align=True)
+#            col = layout.split(factor=0.005, align=True)
+#            col.label( icon='BLANK1')#, icon='ERROR'
+            renderset_box = layout.box()#整体box             
         # 渲染采样面板box_997DD = box_996DB.box()
             if scene.render.engine == 'CYCLES':
                 sampling_box = renderset_box.box()
@@ -193,7 +209,7 @@ class SAMPLES_PT_Panel(bpy.types.Panel):#渲染采样
                 #row.scale_y = 1.5 # 缩小行的高度
                 col_label = row.column()
                 col_label.scale_x = 1.0#
-                col_label.label(text='Render Samples')#渲染采样
+                col_label.label(text='渲染采样')#渲染采样
                 
                 col_prop = row.column()
                 col_prop.prop(scene.cycles, "use_adaptive_sampling", text="Noise Threshold")#噪波阈值
@@ -216,7 +232,7 @@ class SAMPLES_PT_Panel(bpy.types.Panel):#渲染采样
                 
                 row_1 = renderset_box.row()
                 row_1.prop(scene.cycles, "use_denoising", text="Denoise")#渲染降噪
-                row_1.prop(scene.render, "film_transparent")#胶片透明Film Transparent
+                row_1.prop(scene.render, "film_transparent", text="胶片透明")#胶片透明Film Transparent
                 if scene.render.film_transparent:
                     row_1.prop(scene.cycles, "film_transparent_glass", text="Transparent Glass")  # 透明玻璃
                 else:
@@ -232,7 +248,7 @@ class SAMPLES_PT_Panel(bpy.types.Panel):#渲染采样
                 #row.scale_y = 1.5 # 缩小行的高度
                 col_label = row.column()
                 col_label.scale_x = 1.0#
-                col_label.label(text='Render Samples')#渲染采样
+                col_label.label(text='渲染采样')#渲染采样
                 col_label.prop(scene.eevee, "use_taa_reprojection", text="Viewport Denoising")
                 col_label.prop(scene.render, "engine", text="")    
                 col_prop = row.column()
@@ -244,8 +260,8 @@ class SAMPLES_PT_Panel(bpy.types.Panel):#渲染采样
 
 class SCENE_OT_SyncSamples(bpy.types.Operator):#同步采样
     bl_idname = "scene.sync_samples"
-    bl_label = ""
-    bl_description = "Synchronize the sampling settings of this scene to other scenes"
+    bl_label = "同步该场景的采样到其它场景"
+    bl_description = "同步该场景的采样到其它场景"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
     scene_index: bpy.props.IntProperty()
 
@@ -286,7 +302,7 @@ class RESOLUTION_PT_Panel(bpy.types.Panel):#场景分辨率
     bl_label = "Resolution"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'SyncRenderSets'
+    bl_category = '同步'
     bl_order = 1  # 面板的显示顺序
     
     @classmethod
@@ -305,16 +321,15 @@ class RESOLUTION_PT_Panel(bpy.types.Panel):#场景分辨率
             scene_txt = ""  # 默认文字
             if scene.name == bpy.context.scene.name:
                 scene_icon = "FUND"  # 当前场景的图标
-                scene_txt = "【Current】"
-                col_label.alert = True
+                scene_txt = "【当前场景】"
+                col_label.alert = True #用警告样式
             col_label.label(text= f" {scene.name}" + scene_txt, icon=scene_icon)  # 场景名称
-
+            
+  
             col_prop = row.column()
             #col_prop.prop(scene.render, "engine", text="")  # Render Engine
-            col_prop.operator("scene.sync_resolution", text="Sync",icon="UV_SYNC_SELECT").scene_index = scenes.find(scene.name)
+            col_prop.operator("scene.sync_resolution", text="同步",icon="UV_SYNC_SELECT").scene_index = scenes.find(scene.name)
 
-
-        
         #分辨率面板    
             #row_2CC4F = res_box.row(heading='', align=True)
             row_2CC4F = layout.box()
@@ -322,7 +337,7 @@ class RESOLUTION_PT_Panel(bpy.types.Panel):#场景分辨率
             row.prop(scene.render, "resolution_x", text="X")
             row.prop(scene.render, "resolution_y", text="Y")
             row.prop(scene.render, "resolution_percentage", text="%")            
-            #row.operator("scene.sync_resolution", text="Sync").scene_index = scenes.find(scene.name)
+            #row.operator("scene.sync_resolution", text="同步").scene_index = scenes.find(scene.name)
             if scene.render.engine == 'CYCLES':
                 row_3CC4F = row_2CC4F.row(align=True)
                 #row = row_3CC4F.row(align=True)
@@ -336,11 +351,12 @@ class RESOLUTION_PT_Panel(bpy.types.Panel):#场景分辨率
 
 class SCENE_OT_SyncResolution(bpy.types.Operator):#同步场景分辨率
     bl_idname = "scene.sync_resolution"
-    bl_label = ""
-    bl_description = "Synchronize the resolution of this scene to other scenes"
+    bl_label = "同步该场景的分辨率到其它场景"
+    bl_description = "同步该场景的分辨率到其它场景"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
-    scene_index: bpy.props.IntProperty()
+    scene_index: bpy.props.IntProperty()#在操作类中定义一个整数类型的属性 
+
     
     def execute(self, context):
         scenes = bpy.data.scenes
@@ -363,12 +379,12 @@ class SCENE_OT_SyncResolution(bpy.types.Operator):#同步场景分辨率
         
         return {'FINISHED'}
 
-class VPASSES_PT_Panel(bpy.types.Panel):#视图层通道Sync
+class VPASSES_PT_Panel(bpy.types.Panel):#视图层通道
     bl_idname = "VPASSES_PT_Panel"
-    bl_label = "Passes"
+    bl_label = "视图层通道"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'SyncRenderSets'
+    bl_category = '同步'
     bl_order = 0  # 面板的显示顺序
     bl_options = {'DEFAULT_CLOSED'}
     
@@ -398,6 +414,7 @@ class VPASSES_PT_Panel(bpy.types.Panel):#视图层通道Sync
             sorted_view_layers.remove((active_scene, active_view_layer))
             sorted_view_layers.insert(0, (active_scene, active_view_layer))
 
+
             # 绘制排序后的视图层
             for scene, view_layer in sorted_view_layers:
                 row = layout.row(align=True)
@@ -408,19 +425,19 @@ class VPASSES_PT_Panel(bpy.types.Panel):#视图层通道Sync
 
                 if view_layer.name == bpy.context.view_layer.name and scene.name == bpy.context.scene.name:
                     scene_icon = "FUND"  # 当前场景的图标
-                    scene_txt = "【Current】"#Current当前
-                    col_label.alert = True
+                    scene_txt = "(当前视图层)"#Current
+                    col_label.alert = True #用警告样式
         
                     col_label.label(text=f"{scene.name}:" + f"{view_layer.name}" +scene_txt , icon=scene_icon)
                     col_prop = row.column()
                     col_prop.scale_y = 1.0
-                    col_prop.operator("viewlayer.sync_passes", text="Sync", icon="UV_SYNC_SELECT")
+                    col_prop.operator("viewlayer.sync_passes", text="同步通道", icon="UV_SYNC_SELECT")
                 else:
                     col_label.label(text=f"{scene.name}:" + f"{view_layer.name}", icon=scene_icon)
 
             
                 pass_box = layout.box()#整体box
-
+ 
             # 数据
                 #data_box = pass_box.box()  
                 column = pass_box.column()
@@ -498,10 +515,10 @@ class VPASSES_PT_Panel(bpy.types.Panel):#视图层通道Sync
 
             layout.separator()
 
-class SyncOperator(bpy.types.Operator):
+class SyncPassesOperator(bpy.types.Operator):
     bl_idname = "viewlayer.sync_passes"
-    bl_label = "Sync"
-    bl_description = "Synchronize the current viewlayer passes to other view layers"
+    bl_label = "同步通道"
+    bl_description = "同步当前视图层通道状态到其它视图层"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     def execute(self, context):
@@ -525,8 +542,6 @@ class SyncOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
-
-
 classes = (COLORMAN_PT_Panel,
     LIGHTPATHS_PT_Panel,#光程
     SCENE_OT_SyncLightPaths,#同步光程
@@ -535,7 +550,7 @@ classes = (COLORMAN_PT_Panel,
     RESOLUTION_PT_Panel, 
     SCENE_OT_SyncResolution,#同步场景分辨率
     VPASSES_PT_Panel,#视图层通道
-    SyncOperator,#Sync
+    SyncPassesOperator,#同步通道
     )
 
 
@@ -543,6 +558,7 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    
 
 def unregister():
     for cls in classes:
