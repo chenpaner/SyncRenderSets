@@ -61,7 +61,6 @@ class COLORMAN_PT_Panel(bpy.types.Panel):#色彩管理
             if view.use_curve_mapping == True:
                 layout.template_curve_mapping(view, "curve_mapping", type='COLOR', levels=True)
 
-
 class LIGHTPATHS_PT_Panel(bpy.types.Panel):#光程
     bl_idname = "LIGHTPATHS_PT_Panel"
     bl_label = "Light Paths"
@@ -167,7 +166,6 @@ class SCENE_OT_SyncLightPaths(bpy.types.Operator):#同步光程
         
         return {'FINISHED'}
 
-
 class SAMPLES_PT_Panel(bpy.types.Panel):#渲染采样
     bl_idname = "SAMPLES_PT_Panel"
     bl_label = "Samples"
@@ -197,10 +195,7 @@ class SAMPLES_PT_Panel(bpy.types.Panel):#渲染采样
             col_label.label(text= f" {scene.name}" + scene_txt, icon=scene_icon)  # 场景名称
             col0_prop = row.column()
             col0_prop.operator("scene.sync_samples", text="同步", icon="UV_SYNC_SELECT").scene_index = scenes.find(scene.name)
-            
-#            col = layout.column(align=True)
-#            col = layout.split(factor=0.005, align=True)
-#            col.label( icon='BLANK1')#, icon='ERROR'
+
             renderset_box = layout.box()#整体box             
         # 渲染采样面板box_997DD = box_996DB.box()
             if scene.render.engine == 'CYCLES':
@@ -308,12 +303,26 @@ class RESOLUTION_PT_Panel(bpy.types.Panel):#场景分辨率
     @classmethod
     def poll(cls, context):
         return context.scene is not None
-    
+
     def draw(self, context):
         layout = self.layout
         scenes = bpy.data.scenes
         
         for scene in scenes:
+             #最终渲染尺寸
+            rd = scene.render
+            final_res_x = (rd.resolution_x * rd.resolution_percentage) / 100
+            final_res_y = (rd.resolution_y * rd.resolution_percentage) / 100
+            final_res_x_border = round(
+                (final_res_x * (rd.border_max_x - rd.border_min_x)))
+            final_res_y_border = round(
+                (final_res_y * (rd.border_max_y - rd.border_min_y)))
+            # #row1.active = False
+            # row1.label(text="RenderRes")
+            # #col = split.column(align=True)
+            # row1.label(text="{} x {}".format(
+            #     str(final_res_x)[:-2], str(final_res_y)[:-2]))
+
             row = layout.row(align=True)
             col_label = row.column()
             col_label.scale_x = 1.5#
@@ -323,31 +332,29 @@ class RESOLUTION_PT_Panel(bpy.types.Panel):#场景分辨率
                 scene_icon = "FUND"  # 当前场景的图标
                 scene_txt = "【当前场景】"
                 col_label.alert = True #用警告样式
-            col_label.label(text= f" {scene.name}" + scene_txt, icon=scene_icon)  # 场景名称
+            col_label.label(text= f" {scene.name}" +"[{} x {}]".format(str(final_res_x)[:-2], str(final_res_y)[:-2]) , icon=scene_icon)  # 场景名称+ scene_txt
             
-  
             col_prop = row.column()
             #col_prop.prop(scene.render, "engine", text="")  # Render Engine
             col_prop.operator("scene.sync_resolution", text="同步",icon="UV_SYNC_SELECT").scene_index = scenes.find(scene.name)
 
         #分辨率面板    
             #row_2CC4F = res_box.row(heading='', align=True)
-            row_2CC4F = layout.box()
-            row = row_2CC4F.row(align=True)
-            row.prop(scene.render, "resolution_x", text="X")
-            row.prop(scene.render, "resolution_y", text="Y")
-            row.prop(scene.render, "resolution_percentage", text="%")            
-            #row.operator("scene.sync_resolution", text="同步").scene_index = scenes.find(scene.name)
+            row_2CC4F = layout.box()            
+            col = row_2CC4F.column(align=True)
+            row = col.split(factor=0.4, align=True)
+            row.prop(scene.render, "resolution_x", text="X")            
+            row.prop(scene.render, "resolution_percentage", text="%")
+            #row1 = col.row(align=True) 
+            row1 = col.split(factor=0.4, align=True)
+            row1.prop(scene.render, "resolution_y", text="Y") 
+            #row2 = col.split(factor=0.4, align=True)
             if scene.render.engine == 'CYCLES':
-                row_3CC4F = row_2CC4F.row(align=True)
-                #row = row_3CC4F.row(align=True)
-                row_3CC4F.prop(scene.cycles, "use_auto_tile")
+                row1.prop(scene.cycles, "use_auto_tile")
                 if scene.cycles.use_auto_tile:
-                    row_3CC4F.prop(scene.cycles, "tile_size")
-
-
-
-            layout.separator()
+                    row1.prop(scene.cycles, "tile_size")
+            else:
+                row1.label(text= "EEVEE NO Tile Size!")
 
 class SCENE_OT_SyncResolution(bpy.types.Operator):#同步场景分辨率
     bl_idname = "scene.sync_resolution"
