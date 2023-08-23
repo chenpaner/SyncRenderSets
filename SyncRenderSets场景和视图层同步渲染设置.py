@@ -61,6 +61,7 @@ class COLORMAN_PT_Panel(bpy.types.Panel):#色彩管理
             if view.use_curve_mapping == True:
                 layout.template_curve_mapping(view, "curve_mapping", type='COLOR', levels=True)
 
+
 class LIGHTPATHS_PT_Panel(bpy.types.Panel):#光程
     bl_idname = "LIGHTPATHS_PT_Panel"
     bl_label = "Light Paths"
@@ -350,9 +351,11 @@ class RESOLUTION_PT_Panel(bpy.types.Panel):#场景分辨率
             row1.prop(scene.render, "resolution_y", text="Y") 
             #row2 = col.split(factor=0.4, align=True)
             if scene.render.engine == 'CYCLES':
-                row1.prop(scene.cycles, "use_auto_tile")
-                if scene.cycles.use_auto_tile:
-                    row1.prop(scene.cycles, "tile_size")
+                row2 = row1.split(factor=0.1, align=True)
+                row2.prop(scene.cycles, "use_auto_tile",icon_only=True)
+                if scene.cycles.use_auto_tile== False:
+                    row2.active = False
+                row2.prop(scene.cycles, "tile_size")
             else:
                 row1.label(text= "EEVEE NO Tile Size!")
 
