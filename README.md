@@ -14,4 +14,5 @@ This problem also exists for view layers, so you can synchronize the render chan
 ![22222](https://github.com/chenpaner/SyncRenderSets/assets/107256886/a341fbe3-f592-48cb-8ff9-8ee590ab0c05)
 
 3、 UI change，Add Render Resolution，Add Curves Map.
+
 ![Snipaste_2023-08-23_15-22-12](https://github.com/chenpaner/SyncRenderSets/assets/107256886/58ee53d6-6647-4bba-9b4a-69cc557764f0)
